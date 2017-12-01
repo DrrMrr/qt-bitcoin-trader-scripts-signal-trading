@@ -1,0 +1,1 @@
+# qt-bitcoin-trader-scripts-signal-trading
