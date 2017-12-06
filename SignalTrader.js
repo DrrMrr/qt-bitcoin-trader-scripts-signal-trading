@@ -95,12 +95,14 @@ function makeBuy() {
         if (lastCurrencyPrimaryBalance > minPrimaryCurrencyBalanceForSale) {
             eventLogger(scriptName + ".lastCurrencySecondaryBalance: " + lastCurrencySecondaryBalance);
             eventLogger(scriptName + ".lastSellPrice: " + lastSellPrice);
+            lastBuyPrice = trader.get("LastMyBuyPrice");
+            eventLogger(scriptName + ".lastBuyPrice: " + lastBuyPrice);
             var lastPrice = trader.get("LastPrice");
             eventLogger(scriptName + ".lastPrice: " + lastPrice);
             var buyAmount = lastCurrencyPrimaryBalance / lastPrice;
-            buyAmount = buyAmount - 0.001;
+            buyAmount = buyAmount - 0.0001;
             eventLogger(scriptName + ".buyAmount: " + buyAmount);
-            
+
             if (lastSellPrice == 0) {
                 trader.buy(currencySecondary + currencyPrimary, buyAmount, lastPrice);
             } else {
@@ -112,17 +114,19 @@ function makeBuy() {
                 eventLogger(scriptName + ".primaryBalanceOnePromile: " + primaryBalanceOnePromile);
                 var newWantedPrimaryBalance = primaryBalanceOnePromile * 1000 + primaryBalanceOnePromile * feeMaker * 1000;
                 eventLogger(scriptName + ".newWantedPrimaryBalance: " + newWantedPrimaryBalance);
-                
-                var buyPrice = newWantedPrimaryBalance;
-                eventLogger(scriptName + ".lastCurrencySecondaryBalance: " + lastCurrencySecondaryBalance);                
-                eventLogger(scriptName + ".buyPrice: " + buyPrice);
 
-                if (lastPrice < buyPrice)
+                var buyPrice = newWantedPrimaryBalance;
+                eventLogger(scriptName + ".lastCurrencySecondaryBalance: " + lastCurrencySecondaryBalance);
+                eventLogger(scriptName + ".buyPrice: " + buyPrice);
+                /*
+                if (lastPrice < buyPrice || buyPrice > lastSellPrice)
                     trader.buy(currencySecondary + currencyPrimary, buyAmount, lastPrice);
                 else
                     trader.buy(currencySecondary + currencyPrimary, buyAmount, buyPrice);
+                */
+                trader.buy(currencySecondary + currencyPrimary, buyAmount, lastPrice);
             }
-            resetSignalSellFilesStatusFilesStatus();
+            resetSignalSellFilesStatus();
             executeBid = true;
         }
         resetSignalBuyFilesStatus();
@@ -161,7 +165,7 @@ function canMakeSell() {
         return true;
     }
 
-    if (executeAsk == true && lastCurrencySecondaryBalance < minSecondaryCurrencyBalanceForSale) {
+    if (executeAsk == true && lastCurrencySecondaryBalance < minSecondaryCurrencyBalanceForSale && openAsks == 0) {
         eventLogger(scriptName + ".STEP 4");
         executeAsk = false;
         lastSellPrice = trader.get("LastMySellPrice");
@@ -183,17 +187,20 @@ function makeSell() {
         var lastCurrencySecondaryBalance = trader.get("Balance", currencySecondary);
         trader.cancelAsks(currencySecondary + currencyPrimary);
         eventLogger(scriptName + ".lastCurrencyPrimaryBalance: " + lastCurrencyPrimaryBalance);
-        
+
         if (lastCurrencySecondaryBalance > minSecondaryCurrencyBalanceForSale) {
-            eventLogger(scriptName + ".lastCurrencySecondaryBalance: " + lastCurrencySecondaryBalance);
             eventLogger(scriptName + ".lastBuyPrice: " + lastBuyPrice);
+            lastSellPrice = trader.get("LastMySellPrice");
+            eventLogger(scriptName + ".lastSellPrice: " + lastSellPrice);
+            eventLogger(scriptName + ".lastCurrencySecondaryBalance: " + lastCurrencySecondaryBalance);
             var lastPrice = trader.get("LastPrice");
             eventLogger(scriptName + ".lastPrice: " + lastPrice);
             var sellAmount = lastCurrencySecondaryBalance;
-            sellAmount = sellAmount - 0.001;
+            sellAmount = sellAmount - 0.0001;
             eventLogger(scriptName + ".sellAmount: " + sellAmount);
-            
+
             if (lastBuyPrice == 0) {
+                eventLogger(scriptName + ".lastBuyPrice == 0");
                 trader.sell(currencySecondary + currencyPrimary, sellAmount, lastPrice);
             } else {
                 lastBuyPrice = trader.get("LastMyBuyPrice");
@@ -203,17 +210,24 @@ function makeSell() {
                 var primaryBalanceOnePromile = primaryBalanceBeforeLastBuy / ((1 - feeMaker) * 1000);
                 eventLogger(scriptName + ".primaryBalanceOnePromile: " + primaryBalanceOnePromile);
                 var newWantedPrimaryBalance = primaryBalanceOnePromile * 1000 + primaryBalanceOnePromile * feeTaker * 1000;
-                eventLogger(scriptName + ".newWantedPrimaryBalance: " + newWantedPrimaryBalance);                
+                eventLogger(scriptName + ".newWantedPrimaryBalance: " + newWantedPrimaryBalance);
                 var sellPrice = newWantedPrimaryBalance;
 
                 eventLogger(scriptName + ".lastCurrencySecondaryBalance: " + lastCurrencySecondaryBalance);
                 eventLogger(scriptName + ".lastPrice: " + lastPrice);
                 eventLogger(scriptName + ".sellPrice: " + sellPrice);
 
-                if (lastPrice > sellPrice)
+                /*
+                if (lastPrice > sellPrice || sellPrice < lastBuyPrice)
+                {
+                    eventLogger(scriptName + ".SELL at lastPrice");
                     trader.sell(currencySecondary + currencyPrimary, sellAmount, lastPrice);
+                }
                 else
+                    eventLogger(scriptName + ".SELL at sellPrice");
                     trader.sell(currencySecondary + currencyPrimary, sellAmount, sellPrice);
+                }*/
+                trader.sell(currencySecondary + currencyPrimary, sellAmount, lastPrice);
             }
             resetSignalBuyFilesStatus();
             executeAsk = true;
@@ -272,11 +286,11 @@ function canMakeBuy() {
     eventLogger(scriptName + ".lastCurrencyPrimaryBalance: " + lastCurrencyPrimaryBalance);
     eventLogger(scriptName + ".executeBid: " + executeBid);
     if (executeBid == true && lastCurrencyPrimaryBalance > minPrimaryCurrencyBalanceForSale) {
-        eventLogger(scriptName + ".STEP 3");        
+        eventLogger(scriptName + ".STEP 3");
         return true;
     }
 
-    if (executeBid == true && lastCurrencyPrimaryBalance < minPrimaryCurrencyBalanceForSale) {
+    if (executeBid == true && lastCurrencyPrimaryBalance < minPrimaryCurrencyBalanceForSale && openBids == 0) {
         eventLogger(scriptName + ".STEP 4");
         executeBid = false;
         lastBuyPrice = trader.get("LastMyBuyPrice");
