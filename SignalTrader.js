@@ -7,6 +7,10 @@ var signal1Status = "";
 var signal2Status = "";
 var signal3Status = "";
 var signal4Status = "";
+var signal1StatusOld = "";
+var signal2StatusOld = "";
+var signal3StatusOld = "";
+var signal4StatusOld = "";
 var lastBuyPriceFile = variablePath + "lastBuyPrice.txt";
 var lastSellPriceFile = variablePath + "lastSellPrice.txt";
 var lastBuyPrice = 0;
@@ -61,6 +65,38 @@ function checkTradeExecutionCondition() {
     eventLogger(scriptName + ".END");
 }
 
+function signalCorrection() {
+    var scriptName = "signalCorrection()";
+    eventLogger(scriptName + ".START");
+
+    if(signal1Status != signal1StatusOld && signal1Status == "TRUE")
+    {
+       signal3Status = "FALSE";
+       trader.fileWrite(signal3StatusFile, "FALSE");
+       eventLogger(scriptName + ".signal3Status: " + signal3Status); 
+    }
+    if(signal2Status != signal2StatusOld && signal2Status == "TRUE")
+    {
+       signal4Status = "FALSE"; 
+       trader.fileWrite(signal4StatusFile, "FALSE");
+       eventLogger(scriptName + ".signal4Status: " + signal4Status); 
+    }
+    if(signal3Status != signal3StatusOld && signal3Status == "TRUE")
+    {
+       signal1Status = "FALSE"; 
+       trader.fileWrite(signal1StatusFile, "FALSE");
+       eventLogger(scriptName + ".signal1Status: " + signal1Status); 
+    }
+    if(signal4Status != signal4StatusOld && signal4Status == "TRUE")
+    {
+       signal2Status = "FALSE";
+       trader.fileWrite(signal2StatusFile, "FALSE"); 
+       eventLogger(scriptName + ".signal2Status: " + signal2Status);
+    }
+
+    eventLogger(scriptName + ".END");
+}
+
 function readSignalFiles() {
     var scriptName = "readSignalFiles()";
     eventLogger(scriptName + ".START");
@@ -74,6 +110,13 @@ function readSignalFiles() {
     eventLogger(scriptName + ".signal2Status: " + signal2Status);
     eventLogger(scriptName + ".signal3Status: " + signal3Status);
     eventLogger(scriptName + ".signal4Status: " + signal4Status);
+
+    signalCorrection();
+
+    signal1StatusOld = signal1Status;
+    signal2StatusOld = signal2Status;
+    signal3StatusOld = signal3Status;
+    signal4StatusOld = signal4Status;
 
     eventLogger(scriptName + ".END");
 }
@@ -426,7 +469,7 @@ function startEverything() {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 trader.timer(60, "startEverything()");
-trader.timer(15, "checkTradeExecutionCondition()");
+trader.timer(10, "checkTradeExecutionCondition()");
 
 ///////////// Optional /////////////////
 /*
