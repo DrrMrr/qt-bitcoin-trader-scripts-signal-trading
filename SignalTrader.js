@@ -468,7 +468,7 @@ function startEverything() {
 ///////////////                      main program                          ///////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-trader.timer(60, "startEverything()");
+trader.timer(30, "startEverything()");
 trader.timer(10, "checkTradeExecutionCondition()");
 
 ///////////// Optional /////////////////
