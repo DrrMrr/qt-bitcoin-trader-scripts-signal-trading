@@ -65,6 +65,8 @@ function checkTradeExecutionCondition() {
     eventLogger(scriptName + ".END");
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 function signalCorrection() {
     var scriptName = "signalCorrection()";
     eventLogger(scriptName + ".START");
@@ -96,6 +98,8 @@ function signalCorrection() {
 
     eventLogger(scriptName + ".END");
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 function readSignalFiles() {
     var scriptName = "readSignalFiles()";
