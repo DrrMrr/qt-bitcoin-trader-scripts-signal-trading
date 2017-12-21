@@ -1,16 +1,10 @@
 var variablePath = "C:\\Users\\Damjan\\Documents\\GitHub\\qt-bitcoin-trader-scripts-signal-trading\\";
-var signal1StatusFile = variablePath + "Signal1Status.txt";
-var signal2StatusFile = variablePath + "Signal2Status.txt";
-var signal3StatusFile = variablePath + "Signal3Status.txt";
-var signal4StatusFile = variablePath + "Signal4Status.txt";
+var signal1StatusFile = variablePath + "\\BTC\\signal1Status.txt";
+var signal2StatusFile = variablePath + "\\BTC\\signal2Status.txt";
 var signal1Status = "";
 var signal2Status = "";
-var signal3Status = "";
-var signal4Status = "";
 var signal1StatusOld = "";
 var signal2StatusOld = "";
-var signal3StatusOld = "";
-var signal4StatusOld = "";
 var lastBuyPriceFile = variablePath + "lastBuyPrice.txt";
 var lastSellPriceFile = variablePath + "lastSellPrice.txt";
 var lastBuyPrice = 0;
@@ -24,7 +18,7 @@ var feeTaker = 0.002;
 var openAsksCountOld = 0;
 var openBidsCountOld = 0;
 var minPrimaryCurrencyBalanceForSale = 100;
-var minSecondaryCurrencyBalanceForSale = 0.01;
+var minSecondaryCurrencyBalanceForSale = 0.001;
 var executeAsk = false;
 var executeBid = false;
 var lastCurrencySecondaryBalanceRight = 0;
@@ -65,35 +59,6 @@ function checkTradeExecutionCondition() {
     eventLogger(scriptName + ".END");
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-function signalCorrection() {
-    var scriptName = "signalCorrection()";
-    eventLogger(scriptName + ".START");
-
-    if (signal1Status != signal1StatusOld && signal1Status == "TRUE") {
-        signal3Status = "FALSE";
-        trader.fileWrite(signal3StatusFile, "FALSE");
-        eventLogger(scriptName + ".signal3Status: " + signal3Status);
-    }
-    if (signal2Status != signal2StatusOld && signal2Status == "TRUE") {
-        signal4Status = "FALSE";
-        trader.fileWrite(signal4StatusFile, "FALSE");
-        eventLogger(scriptName + ".signal4Status: " + signal4Status);
-    }
-    if (signal3Status != signal3StatusOld && signal3Status == "TRUE") {
-        signal1Status = "FALSE";
-        trader.fileWrite(signal1StatusFile, "FALSE");
-        eventLogger(scriptName + ".signal1Status: " + signal1Status);
-    }
-    if (signal4Status != signal4StatusOld && signal4Status == "TRUE") {
-        signal2Status = "FALSE";
-        trader.fileWrite(signal2StatusFile, "FALSE");
-        eventLogger(scriptName + ".signal2Status: " + signal2Status);
-    }
-
-    eventLogger(scriptName + ".END");
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -101,23 +66,18 @@ function readSignalFiles() {
     var scriptName = "readSignalFiles()";
     eventLogger(scriptName + ".START");
 
-    signal1Status = trader.fileReadAll(signal1StatusFile).toString().trim();
+    signal1Status = trader.fileReadAll(signal1StatusFile).toString().trim();    
     signal2Status = trader.fileReadAll(signal2StatusFile).toString().trim();
-    signal3Status = trader.fileReadAll(signal3StatusFile).toString().trim();
-    signal4Status = trader.fileReadAll(signal4StatusFile).toString().trim();
+    
 
-    eventLogger(scriptName + ".signal1Status: " + signal1Status);
-    eventLogger(scriptName + ".signal2Status: " + signal2Status);
-    eventLogger(scriptName + ".signal3Status: " + signal3Status);
-    eventLogger(scriptName + ".signal4Status: " + signal4Status);
+    eventLogger(scriptName + ".signal1Status: " + signal1Status);    
+    eventLogger(scriptName + ".signal2Status: " + signal2Status);    
 
-    signalCorrection();
+    //signalCorrection();
 
-    signal1StatusOld = signal1Status;
+    signal1StatusOld = signal1Status;    
     signal2StatusOld = signal2Status;
-    signal3StatusOld = signal3Status;
-    signal4StatusOld = signal4Status;
-
+    
     eventLogger(scriptName + ".END");
 }
 
@@ -159,12 +119,7 @@ function executeBuy() {
             var buyPrice = newWantedPrimaryBalance;
             eventLogger(scriptName + ".lastCurrencySecondaryBalance: " + lastCurrencySecondaryBalance);
             eventLogger(scriptName + ".buyPrice: " + buyPrice);
-            /*
-            if (lastPrice < buyPrice || buyPrice > lastSellPrice)
-                trader.buy(currencySecondary + currencyPrimary, buyAmount, lastPrice);
-            else
-                trader.buy(currencySecondary + currencyPrimary, buyAmount, buyPrice);
-            */
+
             trader.buy(currencySecondary + currencyPrimary, buyAmount, lastPrice);
         }
         resetSignalSellFilesStatus();
@@ -205,10 +160,9 @@ function canMakeSell() {
         return true;
     }
 
-    eventLogger(scriptName + ".signal3Status: " + signal3Status);
-    eventLogger(scriptName + ".signal4Status: " + signal4Status);
-
-    if (signal3Status == "TRUE" && signal4Status == "TRUE") {
+    eventLogger(scriptName + ".signal2Status: " + signal2Status);
+    
+    if (signal2Status == "TRUE") {
         eventLogger(scriptName + ".STEP 2");
         return true;
     }
@@ -222,25 +176,17 @@ function canMakeSell() {
     }
 
     var lastCurrencyPrimaryBalance = trader.get("Balance", currencyPrimary);
-    eventLogger(scriptName + ".lastCurrencyPrimaryBalance: " + lastCurrencyPrimaryBalance);
 
-    if (executeAsk == true && lastCurrencySecondaryBalance < minSecondaryCurrencyBalanceForSale && openAsks == 0 && lastCurrencyPrimaryBalance > 100) {
+    eventLogger(scriptName + ".lastCurrencyPrimaryBalance: " + lastCurrencyPrimaryBalance);
+    eventLogger(scriptName + ".minPrimaryCurrencyBalanceForSale: " + minPrimaryCurrencyBalanceForSale);
+
+    if (executeAsk == true && lastCurrencySecondaryBalance < minSecondaryCurrencyBalanceForSale && openAsks == 0 && lastCurrencyPrimaryBalance > minPrimaryCurrencyBalanceForSale) {
         eventLogger(scriptName + ".STEP 4");
         executeBid = false;
         executeAsk = false;
         lastSellPrice = trader.get("LastMySellPrice");
         return false;
     }
-
-    /*
-    eventLogger(scriptName + ".lastCurrencySecondaryBalance: " + lastCurrencySecondaryBalance);
-    eventLogger(scriptName + ".minSecondaryCurrencyBalanceForSale: " + minSecondaryCurrencyBalanceForSale);
-    
-    if (lastCurrencySecondaryBalance > minSecondaryCurrencyBalanceForSale) {
-        eventLogger(scriptName + ".STEP 5");
-        return true;
-    }
-    */
 
     eventLogger(scriptName + ".END");
 }
@@ -287,16 +233,6 @@ function executeSell() {
             eventLogger(scriptName + ".lastPrice: " + lastPrice);
             eventLogger(scriptName + ".sellPrice: " + sellPrice);
 
-            /*
-            if (lastPrice > sellPrice || sellPrice < lastBuyPrice)
-            {
-                eventLogger(scriptName + ".SELL at lastPrice");
-                trader.sell(currencySecondary + currencyPrimary, sellAmount, lastPrice);
-            }
-            else
-                eventLogger(scriptName + ".SELL at sellPrice");
-                trader.sell(currencySecondary + currencyPrimary, sellAmount, sellPrice);
-            }*/
             trader.sell(currencySecondary + currencyPrimary, sellAmount, lastPrice);
         }
         resetSignalBuyFilesStatus();
@@ -326,8 +262,7 @@ function resetSignalBuyFilesStatus() {
     var scriptName = "resetSignalBuyFilesStatus()";
     eventLogger(scriptName + ".START");
 
-    trader.fileWrite(signal1StatusFile, "FALSE");
-    trader.fileWrite(signal2StatusFile, "FALSE");
+    trader.fileWrite(signal1StatusFile, "FALSE");    
 
     eventLogger(scriptName + ".END");
 }
@@ -338,8 +273,7 @@ function resetSignalSellFilesStatus() {
     var scriptName = "resetSignalSellFilesStatus()";
     eventLogger(scriptName + ".START");
 
-    trader.fileWrite(signal3StatusFile, "FALSE");
-    trader.fileWrite(signal4StatusFile, "FALSE");
+    trader.fileWrite(signal2StatusFile, "FALSE");    
 
     eventLogger(scriptName + ".END");
 }
@@ -361,8 +295,8 @@ function canMakeBuy() {
 
 
     eventLogger(scriptName + ".signal1Status: " + signal1Status);
-    eventLogger(scriptName + ".signal2Status: " + signal2Status);
-    if (signal1Status == "TRUE" && signal2Status == "TRUE") {
+    
+    if (signal1Status == "TRUE") {
         eventLogger(scriptName + ".STEP 2");
         return true;
     }
@@ -377,24 +311,15 @@ function canMakeBuy() {
 
     var lastCurrencySecondaryBalance = trader.get("Balance", currencySecondary);
     eventLogger(scriptName + ".lastCurrencySecondaryBalance: " + lastCurrencySecondaryBalance);
+    eventLogger(scriptName + ".minSecondaryCurrencyBalanceForSale: " + minSecondaryCurrencyBalanceForSale);
 
-    if (executeBid == true && lastCurrencyPrimaryBalance < minPrimaryCurrencyBalanceForSale && openBids == 0 && lastCurrencySecondaryBalance > 0.001) {
+    if (executeBid == true && lastCurrencyPrimaryBalance < minPrimaryCurrencyBalanceForSale && openBids == 0 && lastCurrencySecondaryBalance > minSecondaryCurrencyBalanceForSale) {
         eventLogger(scriptName + ".STEP 4");
         executeBid = false;
         executeAsk = false;
         lastBuyPrice = trader.get("LastMyBuyPrice");
         return false;
     }
-
-    /*
-    eventLogger(scriptName + ".lastCurrencyPrimaryBalance: " + lastCurrencyPrimaryBalance);
-    eventLogger(scriptName + ".minPrimaryCurrencyBalanceForSale: " + minPrimaryCurrencyBalanceForSale);
-
-    if (lastCurrencyPrimaryBalance > minPrimaryCurrencyBalanceForSale) {
-        eventLogger(scriptName + ".STEP 5");
-        return true;
-    }
-    */
 
     eventLogger(scriptName + ".END");
 }
@@ -525,21 +450,3 @@ function startEverything() {
 
 trader.timer(30, "startEverything()");
 trader.timer(15, "checkTradeExecutionCondition()");
-
-///////////// Optional /////////////////
-/*
-var executed=false;
-function executeRule()
-{
- executed=true;
- trader.playWav("C:\Windows\Media\Ring04.wav");
- trader.groupDone();
-}
-
-trader.on("MyLastTrade").changed()
-{
- if(executed)return;
- if(symbol != "BTCUSDexchange")return;
- executeRule();
-}
-*/
